@@ -64,14 +64,14 @@ def train(trainloader, validloader, model, criterion, optimizer, lrsch, logger, 
         # print("opt tensor:",out)
         gt = gt.cuda()
         gt_sum = gt_sum.cuda()
-        loss_batch = criterion(outs,gt) + criterion(torch.sum(outs,dim=0),gt_sum)
+        loss_batch = criterion(outs,gt) + criterion(torch.sum(outs,dim=1),gt_sum)
         loss_batch.backward()
         loss_logger += loss_batch.item()    # 显示全部loss
         optimizer.step()
         lrsch.step()
-        sum_mse = criterion(torch.sum(outs,dim=0),gt_sum)
+        sum_mse = criterion(torch.sum(outs,dim=1),gt_sum)
         print(sum_mse)  # debug
-        mse_list.extend(sum_mse.cpu().detach().tolist())
+        mse_list.extend(sum_mse.cpu().detach())
 
     loss_logger /= len(trainloader)
     print("Train loss:",loss_logger)
@@ -92,10 +92,10 @@ def test(testloader, model, criterion, optimizer, lrsch, logger, args):
         gt_sum = gt_sum.cuda()
         # print("label:",label)
         
-        loss_batch = criterion(outs,gt) + criterion(torch.sum(outs,dim=0),gt_sum)
+        loss_batch = criterion(outs,gt) + criterion(torch.sum(outs,dim=1),gt_sum)
         loss_logger += loss_batch.item()    # 显示全部loss
-        sum_mse = criterion(torch.sum(outs,dim=0),gt_sum)
-        mse_list.extend(sum_mse.cpu().detach().tolist())
+        sum_mse = criterion(torch.sum(outs,dim=1),gt_sum)
+        mse_list.extend(sum_mse.cpu().detach())
         
     loss_logger /= len(testloader)
     print("Val loss:",loss_logger)

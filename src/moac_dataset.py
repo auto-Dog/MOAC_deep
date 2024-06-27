@@ -67,10 +67,11 @@ class MOACDataset:
         # 返回数据集中的样本数量
         return len(self.filename_GT)  # 假设数据集中有1000个样本
 
-# 使用示例
-dataset = MOACDataset('/kaggle/working/MOAC_deep/dataset', 'train')
-train_loader = DataLoader(dataset, batch_size=1, shuffle=True)
-for gt, noised, gt_sum in train_loader:  # 获取第0个样本的GT和噪声图像
-    print('Size of gt, noised, gt_sum:{}{}{}'\
-          .format(gt.size(), noised.size(), gt_sum.size()))
-    break
+if __name__ == '__main__':
+    # 使用示例
+    dataset = MOACDataset('/kaggle/working/MOAC_deep/dataset', 'train')
+    train_loader = DataLoader(dataset, batch_size=1, shuffle=True)
+    for gt, noised, gt_sum in train_loader:  # 获取第0个样本的GT和噪声图像
+        print('Size of gt, noised, gt_sum:{}{}{}'\
+            .format(gt.size(), noised.size(), gt_sum.size()))
+        break
