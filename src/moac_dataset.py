@@ -30,7 +30,7 @@ class MOACDataset:
         # 获取图像对的文件名
         gt_path = os.path.join(self.gt_dir, self.filename_GT[index])
         noised_path = os.path.join(self.noised_dir, self.filename_noised[index])
-        print(self.filename_GT[index],self.filename_noised[index]) # debug
+        # print(self.filename_GT[index],self.filename_noised[index]) # debug
         # 读取图像
         gt_image = Image.open(gt_path).convert('L')
         noised_image = Image.open(noised_path).convert('RGB')   # 只有RG通道有效，作为实部和虚部
@@ -55,7 +55,8 @@ class MOACDataset:
 
         # 模型的第一阶段，由于采用numpy实现，故在getitem步骤直接执行，将第一步结果发给模型做第二步恢复
         _,noised_hinv_deconv_mat = pre_deconv(noised_seq,20,1000,h_coff,SNR_db)
-
+        noised_hinv_deconv_mat = np.array([noised_hinv_deconv_mat.real,noised_hinv_deconv_mat.imag],\
+                                          dtype=float)    # 2xHxW
         # 返回 GT 和噪声图像的数组
         return torch.from_numpy(gt_array), torch.from_numpy(noised_hinv_deconv_mat), \
             torch.from_numpy(gt_sum)
