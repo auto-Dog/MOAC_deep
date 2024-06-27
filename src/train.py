@@ -70,7 +70,7 @@ def train(trainloader, validloader, model, criterion, optimizer, lrsch, logger, 
         optimizer.step()
         lrsch.step()
         sum_mse = criterion(torch.sum(outs.squeeze(),dim=1),gt_sum)
-        print(sum_mse)  # debug
+        # print(sum_mse)  # debug
         mse_list.append(sum_mse.cpu().detach())
 
     loss_logger /= len(trainloader)
