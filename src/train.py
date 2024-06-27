@@ -102,7 +102,7 @@ def test(testloader, model, criterion, optimizer, lrsch, logger, args):
 
     avg_mse = log_metric('Test', mse_list, logger,loss_logger)
 
-    return avg_mse, model.state_dict()
+    return 10./avg_mse, model.state_dict()  # mse取逆，作为分数（mse越低分数越高）
         
 def log_metric(prefix,mse,logger,loss):
     avg_mse = np.mean(np.array(mse))
