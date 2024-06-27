@@ -58,8 +58,8 @@ class MOACDataset:
         noised_hinv_deconv_mat = np.array([noised_hinv_deconv_mat.real,noised_hinv_deconv_mat.imag],\
                                           dtype=float)    # 2xHxW
         # 返回 GT 和噪声图像的数组
-        return torch.from_numpy(gt_array), torch.from_numpy(noised_hinv_deconv_mat), \
-            torch.from_numpy(gt_sum)
+        return torch.from_numpy(gt_array).float(), torch.from_numpy(noised_hinv_deconv_mat).float(), \
+            torch.from_numpy(gt_sum).float()
 
     def __len__(self):
         # 返回数据集中的样本数量
