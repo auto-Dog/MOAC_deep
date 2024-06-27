@@ -68,6 +68,6 @@ class MOACDataset:
 dataset = MOACDataset('/kaggle/working/MOAC_deep/dataset', 'train')
 train_loader = DataLoader(dataset, batch_size=1, shuffle=True)
 for gt, noised, gt_sum in train_loader:  # 获取第0个样本的GT和噪声图像
-    print('Size of gt, noised, gt_sum, h_coff:{}{}{}'\
+    print('Size of gt, noised, gt_sum:{}{}{}'\
           .format(gt.size(), noised.size(), gt_sum.size()))
     break
