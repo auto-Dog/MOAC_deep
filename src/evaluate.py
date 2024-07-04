@@ -1,9 +1,12 @@
 import numpy as np
 import pdb
 from numpy import fft
+from single_inference import inference
 
 def per_pkt_transmission(args, MM, TransmittedSymbols):
     # Pass the channel and generate samples at the receiver
+
+    # The taus are only for signal noise calculation
     taus = np.sort(np.random.uniform(0,args.maxDelay,(1,MM-1)))[0]
     taus[-1] = args.maxDelay
     dd = np.zeros(MM)
@@ -16,6 +19,7 @@ def per_pkt_transmission(args, MM, TransmittedSymbols):
             dd[idx] = taus[idx] - taus[idx-1]
 
     # # # Generate the channel: phaseOffset = 0->0; 1->2pi/4; 2->2pi/2; 3->2pi
+    # np.random.seed(1896)
     if args.phaseOffset == 0:
         hh = np.ones([MM,1])
     elif args.phaseOffset == 1:
@@ -24,11 +28,23 @@ def per_pkt_transmission(args, MM, TransmittedSymbols):
         hh = np.exp(1j*np.random.uniform(0,1,(MM,1)) * 3* np.pi/4)
     else:
         hh = np.exp(1j*np.random.uniform(0,1,(MM,1)) * 4* np.pi /4)
-
+    # print(hh)   # debug
     # complex pass the complex channel
+    # 1. Use Matrix Mul Mythod
+    LL = len(TransmittedSymbols[0])
+    hh_expand = np.tile(hh,(1,TransmittedSymbols.shape[1]))
+    TMAT1 = TransmittedSymbols*hh_expand
+    d_data_vec = TMAT1.T.reshape(-1,1)
+    D_array = np.zeros((MM*LL+MM-1,MM*LL))
+    for idx in range(MM*LL):    # 按列依次赋值
+        D_array[np.arange(MM)+idx, idx] = 1.
+    samples1 = D_array @ d_data_vec
+    samples = samples1.flatten()
+
+    # 2. author's method
     for idx in range(MM):
         TransmittedSymbols[idx,:] = TransmittedSymbols[idx,:] * hh[idx][0]
-
+    # print('Phase Misalign signal:',TransmittedSymbols[:,0])  # debug
     # compute the received signal power and add noise
     LL = len(TransmittedSymbols[0])
     SignalPart = np.sum(TransmittedSymbols,0)
@@ -37,15 +53,16 @@ def per_pkt_transmission(args, MM, TransmittedSymbols):
     EsN0 = np.power(10, args.EsN0dB/10.0)
     noisePower = SigPower/EsN0
 
-    # Oversample the received signal
-    RepeatedSymbols = np.repeat(TransmittedSymbols, MM, axis = 1)
-    for idx in np.arange(MM):
-        extended = np.array([np.r_[np.zeros(idx), RepeatedSymbols[idx], np.zeros(MM-idx-1)]])
-        if idx == 0:
-            samples = extended
-        else:
-            samples = np.r_[samples, extended]
-    samples = np.sum(samples, axis=0)
+    # # Oversample the received signal(might cause error)
+    # RepeatedSymbols = np.repeat(TransmittedSymbols, MM, axis = 1)
+    # for idx in np.arange(MM):
+    #     extended = np.array([np.r_[np.zeros(idx), RepeatedSymbols[idx], np.zeros(MM-idx-1)]])
+    #     if idx == 0:
+    #         samples = extended
+    #     else:
+    #         samples = np.r_[samples, extended]
+    # samples = np.sum(samples, axis=0)
+    # print('difference:',np.sum(np.abs(samples1-samples))) # debug
     
     # generate noise
     for idx in np.arange(MM):
@@ -56,60 +73,83 @@ def per_pkt_transmission(args, MM, TransmittedSymbols):
             AWGNnoise = np.r_[AWGNnoise, np.array([noise])]
 
     AWGNnoise = np.reshape(AWGNnoise, (1,MM*(LL+1)), 'F')
-    samples = samples + AWGNnoise[0][0:-1]
+    # samples = samples + AWGNnoise[0][0:-1]    # noise algorithm 1
 
+    # noise algorithm 2
+    def awgn(x, snr):
+        '''Add AWGN
+        x: numpy array
+        snr: int, dB
+        '''
+        len_x = x.flatten().shape[0]
+        Ps = np.sum(np.power(x, 2)) / len_x
+        Pn = Ps / (np.power(10, snr / 10))
+        noise = np.random.randn(x.shape[0]) * np.sqrt(Pn)/2 + 1j * (np.random.randn(x.shape[0]) * np.sqrt(Pn)/2)
+        return x + noise
+    samples = awgn(samples,args.EsN0dB)
+
+    # np.save('orimethod_samples.npy',samples.flatten())  # debug
+    outputs = [[],[],[],[],[],[]]
+    if args.Estimator == -1:
     # aligned_sample estiamtor
-    if args.Estimator == 1:
+    # if args.Estimator == 1:
         MthFiltersIndex = (np.arange(LL) + 1) * MM - 1
-        output = samples[MthFiltersIndex]
-        return output
+        output = samples.copy()[MthFiltersIndex]
+        # print('For estimation:',output[0])# debug
+        # return output
+        outputs[0] = output.copy()
 
     # ML estiamtor
-    if args.Estimator == 2:
+    # if args.Estimator == 2:
         noisePowerVec = noisePower/2./dd
-        HH = np.zeros([MM*(LL+1)-1, MM*LL])
-        for idx in range(MM*LL):
+        HH = np.zeros([MM*(LL+1)-1, MM*LL])*(1+0j)
+        for idx in range(MM*LL):    # 按列依次赋值
             HH[np.arange(MM)+idx, idx] = hh[np.mod(idx,MM)]
         CzVec = np.tile(noisePowerVec, [1, LL+1])
         Cz = np.diag(CzVec[0][:-1])
+        # Cz = np.diag(CzVec[0][:-1]/CzVec[0][:-1])
         ## ------------------------------------- ML
         MUD = np.matmul(HH.conj().T, np.linalg.inv(Cz))
         MUD = np.matmul(MUD, HH)
         MUD = np.matmul(np.linalg.inv(MUD), HH.conj().T)
         MUD = np.matmul(MUD, np.linalg.inv(Cz))
         MUD = np.matmul(MUD, np.array([samples]).T)
-
+        # print('recover signal:',MUD.shape)  #debug
         ## ------------------------------------- Estimate SUM
-        output = np.sum(np.reshape(MUD, [LL, MM]), 1)
-        return output
+        output = np.sum(np.reshape(MUD, [LL,MM]), 1)
+        # return output
+        outputs[1] = output.copy()
 
     # ML estiamtor
-    if args.Estimator == 5:
+    # if args.Estimator == 41:
         import scipy.sparse.linalg as srlg
         from scipy.sparse import csr_matrix
         noisePowerVec = noisePower/2./dd
-        HH = np.zeros([MM*(LL+1)-1, MM*LL])
-        for idx in range(MM*LL):
+        HH = np.zeros([MM*(LL+1)-1, MM*LL]) * (1+0j)
+        for idx in range(MM*LL):    # 按列依次赋值
             HH[np.arange(MM)+idx, idx] = hh[np.mod(idx,MM)]
+        # print(HH[0:7,0:7])  # debug
         CzVec = np.tile(noisePowerVec, [1, LL+1])
         Cz = np.diag(CzVec[0][:-1])
         ## ------------------------------------- ML
         D_array_csr = csr_matrix(HH)               # 稀疏矩阵求解：5000x5000~2.7s
-        d_inv_csr = srlg.inv(D_array_csr.T@D_array_csr)
-        restored = d_inv_csr @ D_array_csr.T @ samples.T  
+        d_inv_csr = srlg.inv(D_array_csr.conj().T@D_array_csr)
+        restored = d_inv_csr @ D_array_csr.conj().T @ samples.T  
 
         ## ------------------------------------- Estimate SUM
         output = np.sum(np.reshape(restored, [LL, MM]), 1)
-        return output
+        # return output
+        outputs[2] = output.copy()
 
     # SP_ML estiamtor
-    if args.Estimator == 3:
+    # if args.Estimator == 3:
         noisePowerVec = noisePower/2./dd
         output = BP_Decoding(samples, MM, LL, hh, noisePowerVec)
-        return output
+        # return output
+        outputs[3] = output.copy()
     
     # wiener estimator
-    if args.Estimator == 4:
+    # if args.Estimator == 4:
         pad_len = len(samples)
         # print(samples)  # debug
         # print(MM,hh.shape)    # debug
@@ -117,11 +157,24 @@ def per_pkt_transmission(args, MM, TransmittedSymbols):
         kernel[0:MM] = 1.
         output_pad = wiener_deconv(samples.flatten(),kernel,args.EsN0dB)
         x_re_mat = output_pad[:(LL*MM)].reshape(LL,MM).T  # 这里输出的是Hs, 即每个信号还保留了信道增益
+        # print(x_re_mat.flatten()[:5])   # debug
         hh_expand = np.tile(hh,(1,x_re_mat.shape[1]))
         x_re_mat = x_re_mat/hh_expand
         # print(x_re_mat)   # debug
         output = np.sum(x_re_mat,axis=0)
-        return output
+        # return output
+        outputs[4] = output.copy()
+    
+    # Wiener-Denoise estimator
+    # if args.Estimator == 5:
+        pad_len = len(samples)
+        # print(samples)  # debug
+        # print(MM,hh.shape)    # debug
+        output,_ = inference(samples.flatten(),'../model_new.pth',MM,LL,hh,args.EsN0dB)
+        # return output
+        outputs[5] = output.copy()
+
+        return outputs
 
 def wiener_deconv(input, kernel, SNR_db=0):       
     ''' 
@@ -178,7 +231,6 @@ def BP_Decoding(samples, M, L, hh, noisePowerVec):
     element = np.zeros([4,4])
     element[3:,3:] = 1
     ObserMat7 = fill_mat_with_piece(element,Obser_Lamb.shape[0]) * Obser_Lamb # pos-by-pos multiplication
-
     # Eta = LambdaMat * mean
     etaMat = np.matmul(np.r_[beta1,beta2],np.r_[np.real([samples]),np.imag([samples])])
 
@@ -305,51 +357,56 @@ def BP_Decoding(samples, M, L, hh, noisePowerVec):
     return Sum_mu
 
 def test():
+    from PIL import Image
     from options import args_parser
-    MM = 10
-    LL = 100
+    np.set_printoptions(precision=1)
+    MM = 20
+    LL = 256
     args = args_parser()
     args.EsN0dB = 0
-    args.phaseOffset = 0
-    # Generate TransmittedSymbols
-    for m in range(MM):
-        symbols = 2 * np.random.randint(10, size=(2,LL)) - 1
-        ComplexSymbols = symbols[0,:] + symbols[1,:] * 0j   # only real part get modulation
-        if m == 0:
-            TransmittedSymbols = np.array([ComplexSymbols])
-        else:
-            TransmittedSymbols = np.r_[TransmittedSymbols, np.array([ComplexSymbols])]
-    # print(TransmittedSymbols) # debug
+    args.phaseOffset = 3
+    # # Generate TransmittedSymbols
+    # for m in range(MM):
+    #     symbols = 2 * np.random.randint(2, size=(2,LL)) - 1
+    #     ComplexSymbols = symbols[0,:] + symbols[1,:] * 0j   # only real part get modulation
+    #     if m == 0:
+    #         TransmittedSymbols = np.array([ComplexSymbols])
+    #     else:
+    #         TransmittedSymbols = np.r_[TransmittedSymbols, np.array([ComplexSymbols])]
+
+    loaded_image = Image.open('d_data.png').convert('L')
+    loaded_array = np.array(loaded_image)
+    d_data = (loaded_array.astype('float32') - 128) / 20.  # 将0-255的整数转换回小数
+    TransmittedSymbols = d_data + 0j
+    # print('ori symbols:',TransmittedSymbols[:,0]) # debug
     target = np.sum(TransmittedSymbols, 0)
+    args.Estimator = -1 # test all
+    output = per_pkt_transmission(args, MM, TransmittedSymbols.copy())
     # MSE of the aligned_sample estimator
-    args.Estimator = 1
-    output = per_pkt_transmission(args, MM, TransmittedSymbols)
-    MSE1 = np.mean(np.power(np.abs(output - target),2))
+    MSE1 = np.mean(np.power(np.abs(output[0].flatten() - target.flatten()),2))
     print('MSE1 = ', MSE1)
 
     # MSE of the ML estimator
-    args.Estimator = 2
-    output = per_pkt_transmission(args, MM, TransmittedSymbols)
-    MSE2 = np.mean(np.power(np.abs(output - target),2))
+    MSE2 = np.mean(np.power(np.abs(output[1].flatten() - target.flatten()),2))
     print('MSE2 = ', MSE2)
 
     # MSE of the ML estimator (My design)
-    args.Estimator = 5
-    output = per_pkt_transmission(args, MM, TransmittedSymbols)
-    MSE2 = np.mean(np.power(np.abs(output - target),2))
-    print('MSE2 = ', MSE2)
+    MSE2 = np.mean(np.power(np.abs(output[2].flatten() - target.flatten()),2))
+    print('MSE2\' = ', MSE2)
 
     # MSE of the SP-ML estimator
-    args.Estimator = 3
-    output = per_pkt_transmission(args, MM, TransmittedSymbols)
-    MSE3 = np.mean(np.power(np.abs(output - target),2))
+    MSE3 = np.mean(np.power(np.abs(output[3].flatten() - target.flatten()),2))
     print('MSE3 = ', MSE3)
 
     # MSE of the Wiener estimator
     args.Estimator = 4
-    output = per_pkt_transmission(args, MM, TransmittedSymbols)
-    MSE4 = np.mean(np.power(np.abs(output - target),2))
+    MSE4 = np.mean(np.power(np.abs(output[4].flatten() - target.flatten()),2))
     print('MSE4 = ', MSE4)
+
+    # MSE of the Wiener-Denoise estimator
+    args.Estimator = 5
+    MSE5 = np.mean(np.power(np.abs(output[5].flatten() - target.flatten()),2))
+    print('MSE5 = ', MSE5)
 
 if __name__ == "__main__":
     test()

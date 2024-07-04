@@ -126,7 +126,7 @@ def pre_deconv(input_samples, M_users, L_symbols, h_coff, SNR_db=0):
     Restore all samples(MxL,) from misaligned y(MxL+M-1,)
     ---
     input_samples: M*(L+1)-1长复数序列
-    M_users: 补全至M的卷积核
+    M_users: 用户数量
     L_symbols: 每个用户发送数据长度
     h_coff: 信道增益，需要已知
     SNR_db: 信道质量，需要已知
@@ -138,10 +138,10 @@ def pre_deconv(input_samples, M_users, L_symbols, h_coff, SNR_db=0):
     if len(input_samples) != M_users*L_symbols+M_users-1:
         raise RuntimeError('The shape of input is:{}, not equals to M*L+M-1'.format(str(len(input_samples))))
     kernel_k = np.array([1.]*M_users)
-    k_pad = np.zeros_like(input_samples).flatten()
-    k_pad[0:M_users] = kernel_k
+    k_pad = np.zeros_like(input_samples)
+    k_pad[0:M_users] = 1.
     out = wiener_deconv(input_samples,k_pad,SNR_db)  # 输出应该是复数序列
-    out = out.flatten()[0:(L_symbols*M_users)]  # 这一步输出的是Hs+K^-1 n
+    out = out.flatten()[:(L_symbols*M_users)]  # 这一步输出的是Hs+K^-1 n
     out_mat = out.reshape(L_symbols,M_users).T
     h_coff = h_coff.reshape(-1,1)
     # print(h_coff)   # debug
@@ -163,11 +163,11 @@ def pre_deconv(input_samples, M_users, L_symbols, h_coff, SNR_db=0):
 
 if __name__ == '__main__':
     import time
-    model = TinyUNet(2,2,bilinear=True)
+    model = TinyUNet(2,2,bilinear=True).cuda()
     model.train()
     criteria = nn.MSELoss()
-    input = torch.randn((100,2,20,1024))
-    target = torch.randn((100,2,20,1024))
+    input = torch.randn((100,2,20,1024)).cuda()
+    target = torch.randn((100,2,20,1024)).cuda()
     start_time = time.time()
     for i in range(100):
         out = model(input[i,:,:,:].unsqueeze(0))

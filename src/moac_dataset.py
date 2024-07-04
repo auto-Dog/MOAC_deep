@@ -59,7 +59,9 @@ class MOACDataset:
                                           dtype=float)    # 2xHxW
         gt_array = np.expand_dims(gt_array,axis=0)  # 和1xHxW输出对齐
         # 返回 GT 和噪声图像的数组
-        return torch.from_numpy(gt_array).float(), torch.from_numpy(noised_hinv_deconv_mat).float(), \
+        return torch.from_numpy(gt_array).float(),\
+              torch.from_numpy(noised_array).float(), \
+              torch.from_numpy(noised_hinv_deconv_mat).float(), \
             torch.from_numpy(gt_sum).float()
 
     def __len__(self):
