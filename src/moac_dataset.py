@@ -56,7 +56,7 @@ class MOACDataset:
         noised_seq = noised_seq[:-1]  # 得到过采样有噪失真序列
 
         # 模型的第一阶段，由于采用numpy实现，故在getitem步骤直接执行，将第一步结果发给模型做第二步恢复
-        _,noised_hinv_deconv_mat = pre_deconv(noised_seq,self.M_users,1000,h_coff,SNR_db)
+        _,noised_hinv_deconv_mat = pre_deconv(noised_seq,self.M_users,self.L_symbols,h_coff,SNR_db)
         noised_hinv_deconv_mat = np.array([noised_hinv_deconv_mat.real,noised_hinv_deconv_mat.imag],\
                                           dtype=float)    # 2xHxW
         gt_array = np.expand_dims(gt_array,axis=0)  # 和1xHxW输出对齐
