@@ -28,7 +28,7 @@ args = parser.parse_args()
 ### write model configs here
 root =  '/kaggle/working/MOAC_deep/'
 save_root = './run'
-pth_location = '../model_new.pth'
+pth_location = '../model_Umod1.pth'
 logger = Logger(save_root)
 logger.global_step = 0
 n_splits = 5
@@ -43,7 +43,7 @@ testloader = torch.utils.data.DataLoader(testset,batch_size=args.batchsize,shuff
 
 # trainval_loader = {'train' : trainloader, 'valid' : validloader}
 
-model = TinyUNet(2,1,bilinear=True)
+model = TinyUNet(4,1,bilinear=True)
 model = model.cuda()
 
 criterion = nn.MSELoss()
@@ -121,4 +121,5 @@ if __name__=='__main__':
         score, model_save = test(testloader,model,criterion,optimizer,lrsch,logger,args)
         if score > score_last:
             score_last = score
+            print('Save result at epoch {}'.format(i))
             torch.save(model_save, pth_location)
