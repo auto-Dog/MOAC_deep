@@ -24,6 +24,8 @@ class MOACDataset:
         
         self.filename_GT = file_to_list(self.gt_dir)
         self.filename_noised = file_to_list(self.noised_dir)
+        self.M_users = 14
+        self.L_symbols = 256
 #         print(self.filename_GT[0:10],self.filename_noised[0:10])# debug
 
     def __getitem__(self, index):
@@ -46,7 +48,7 @@ class MOACDataset:
         hh_array_seed = self.filename_GT[index]
         hh_array_seed = int(hh_array_seed[0:5])
         np.random.seed(hh_array_seed+2)
-        h_coff = np.exp(1j*np.random.uniform(0,1,(20,1)) * 4* np.pi /4).reshape(-1,1) # e^j0 ~ e^j pi
+        h_coff = np.exp(1j*np.random.uniform(0,1,(self.M_users,1)) * 4* np.pi /4).reshape(-1,1) # e^j0 ~ e^j pi
         # 文件名中隐含了SNR信息（作为种子）
         random.seed(hh_array_seed+1)
         SNR_db = random.randint(-4, 4)*5    # -20dB ~ 20dB
@@ -54,15 +56,18 @@ class MOACDataset:
         noised_seq = noised_seq[:-1]  # 得到过采样有噪失真序列
 
         # 模型的第一阶段，由于采用numpy实现，故在getitem步骤直接执行，将第一步结果发给模型做第二步恢复
-        _,noised_hinv_deconv_mat = pre_deconv(noised_seq,20,1000,h_coff,SNR_db)
+        _,noised_hinv_deconv_mat = pre_deconv(noised_seq,self.M_users,1000,h_coff,SNR_db)
         noised_hinv_deconv_mat = np.array([noised_hinv_deconv_mat.real,noised_hinv_deconv_mat.imag],\
                                           dtype=float)    # 2xHxW
         gt_array = np.expand_dims(gt_array,axis=0)  # 和1xHxW输出对齐
         # 返回 GT 和噪声图像的数组
         return torch.from_numpy(gt_array).float(),\
-              torch.from_numpy(noised_array).float(), \
               torch.from_numpy(noised_hinv_deconv_mat).float(), \
             torch.from_numpy(gt_sum).float()
+        # return torch.from_numpy(gt_array).float(),\
+        #       torch.from_numpy(noised_array).float(), \
+        #       torch.from_numpy(noised_hinv_deconv_mat).float(), \
+        #     torch.from_numpy(gt_sum).float()
 
     def __len__(self):
         # 返回数据集中的样本数量
