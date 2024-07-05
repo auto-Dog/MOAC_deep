@@ -41,7 +41,7 @@ test_files = ['20161014_184659.csv','20161016_053656.csv']
 
 def generate_gt_and_noised_images(file_list, gt_path, noised_path):
     # 处理数据集中的每一张图像
-    root = '../dataset/archive/'
+    root = '/kaggle/input/gas-sensor-array-temperature-modulation'
     for file_i,file in enumerate(file_list):
         file = os.path.join(root,file)
         df = pandas.read_csv(file,encoding='UTF-8') 
