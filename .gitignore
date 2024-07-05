@@ -1,3 +1,4 @@
 debug/
-dataset/
+dataset/train
+dataset/test
 *.pth
