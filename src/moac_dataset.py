@@ -42,8 +42,8 @@ class MOACDataset:
         gt_sum = np.sum(gt_array,axis=0)
 
         # 归一化噪声图像
-        noised_array = np.array(noised_image) / 255.0
-        noised_array = noised_array[:,:,0] + 1j*noised_array[:,:,1] # 转成复数矩阵
+        noised_array_ori = np.array(noised_image) / 255.0
+        noised_array = noised_array_ori[:,:,0] + 1j*noised_array_ori[:,:,1] # 转成复数矩阵
         # 文件名中隐含了信道信息（作为信道种子）
         hh_array_seed = self.filename_GT[index]
         hh_array_seed = int(hh_array_seed[0:5])
@@ -64,7 +64,8 @@ class MOACDataset:
         # return torch.from_numpy(gt_array).float(),\
         #       torch.from_numpy(noised_hinv_deconv_mat).float(), \
         #     torch.from_numpy(gt_sum).float()
-        noised_comb = torch.cat((torch.from_numpy(noised_array).float(),torch.from_numpy(noised_hinv_deconv_mat).float()),dim=0)    # 4xHxW
+        noised_comb = torch.cat((torch.from_numpy(noised_array_ori[:,:,0:2]).float(),torch.from_numpy(noised_hinv_deconv_mat).float()),dim=0)    # 4xHxW
+        print(noised_comb.size())   # debug
         return torch.from_numpy(gt_array).float(),\
               noised_comb,\
             torch.from_numpy(gt_sum).float()
