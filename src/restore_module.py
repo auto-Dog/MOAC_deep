@@ -100,7 +100,6 @@ class TinyUNet(nn.Module):
         x2 = self.down1(x1)
         x3 = self.down2(x2)
         x = self.up1(x3, x2)
-        x = x3 + x     # residual path
         x = self.up2(x, x1)
         xc = x1 + x     # residual path
         logits = self.outc(xc)
