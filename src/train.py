@@ -97,7 +97,7 @@ def test(testloader, model, criterion, optimizer, lrsch, logger, args):
         loss_logger += loss_batch.item()    # 显示全部loss
         sum_mse = criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)
         mse_list.append(sum_mse.cpu().detach())
-    wiener_mse = criterion(torch.sum(noised.cuda()[:,2:3,:,:].squeeze(),dim=1),gt_sum).cpu().detach()
+    wiener_mse = criterion(torch.sum(noised.cuda()[:,2,:,:].squeeze(),dim=1),gt_sum).cpu().detach()
     print('Compare with Wiener MSE:',wiener_mse)    # compare with winener mse
     loss_logger /= len(testloader)
     print("Val loss:",loss_logger)

@@ -122,8 +122,9 @@ def distortion_func(image:np.ndarray,h_coff,SNR_db=0):
     convSame = awgn(convSame,SNR_db) # add white gaussian noise
     # print(np.sum(convSame.real),np.sum(convSame.imag))  # debug
     convSame = np.array([convSame.real,convSame.imag,np.zeros_like(convSame.real)])# 为保证计算效率，此处分离复数实部虚部
-    convSame = (convSame-np.min(convSame))/(np.max(convSame)-np.min(convSame)) # 归一化
-    convSame = np.uint8(convSame * 255)
+    # convSame = (convSame-np.min(convSame))/(np.max(convSame)-np.min(convSame)) # 不能随意归一化！将导致卷积结果不能被维纳滤波准确估计
+    convSame = np.clip(convSame*10.,0,255)
+    convSame = np.uint8(convSame)
     convSame = np.transpose(convSame, (1, 2, 0)) # HxWxC
     # convSame = torch.from_numpy(convSame)   # 注意：在显卡上运行时，此处加cuda()
     return convSame
