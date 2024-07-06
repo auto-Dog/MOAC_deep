@@ -74,6 +74,7 @@ def train(trainloader, validloader, model, criterion, optimizer, lrsch, logger, 
         mse_list.append(sum_mse.cpu().detach())
     wiener_mse = criterion(torch.sum(noised.cuda()[:,2:3,:,:].squeeze(),dim=1),gt_sum).cpu().detach()
     print('Compare with Wiener MSE:',wiener_mse)    # compare with winener mse
+    print('Network MSE:',sum_mse.cpu().detach())
     loss_logger /= len(trainloader)
     print("Train loss:",loss_logger)
     log_metric('Train', mse_list, logger,loss_logger)
@@ -99,6 +100,7 @@ def test(testloader, model, criterion, optimizer, lrsch, logger, args):
         mse_list.append(sum_mse.cpu().detach())
     wiener_mse = criterion(torch.sum(noised.cuda()[:,2,:,:].squeeze(),dim=1),gt_sum).cpu().detach()
     print('Compare with Wiener MSE:',wiener_mse)    # compare with winener mse
+    print('Network MSE:',sum_mse.cpu().detach())
     loss_logger /= len(testloader)
     print("Val loss:",loss_logger)
 
