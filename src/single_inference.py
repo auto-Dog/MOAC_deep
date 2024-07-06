@@ -23,14 +23,16 @@ def inference(y_samples,pth_tar_location,M_users, L_symbols, h_coff, SNR_db):
     return: L长序列, M*(L+1)-1长复数序列
     '''
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    model2 = TinyUNet(2,1,bilinear=True).to(device)
+    # model2 = TinyUNet(2,1,bilinear=True).to(device)
+    model2 = TinyUNet(4,1,bilinear=True).to(device)
     model2.load_state_dict(torch.load(pth_tar_location, map_location='cpu'))
     # y_samples = (y_samples-np.min(y_samples))/(np.max(y_samples)-np.min(y_samples)) # 归一化
     _,s_deconv = pre_deconv(y_samples, M_users, L_symbols, h_coff, SNR_db=SNR_db)
     # s_sum_est = np.sum(s_deconv,axis=0) # debug
     # s_estimate = s_deconv   # debug
-
-    s_deconv = np.array([[s_deconv.real,s_deconv.imag]], dtype=float)    # 1x2xHxW
+    y_out_mat = y_samples[:M_users*L_symbols].reshape(L_symbols,M_users).T
+    # s_deconv = np.array([[s_deconv.real,s_deconv.imag, y_out_mat.real, y_out_mat.imag]], dtype=float)    # 1x2xHxW
+    s_deconv = np.array([[y_out_mat.real, y_out_mat.imag, s_deconv.real,s_deconv.imag, ]], dtype=float)    # 1x4xHxW
     # factor = np.max(s_deconv)
     # s_deconv = (s_deconv-np.min(s_deconv))/(np.max(s_deconv)-np.min(s_deconv)) # 归一化
     s_deconv = torch.from_numpy(s_deconv).float().to(device)
