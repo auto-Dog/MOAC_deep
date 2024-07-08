@@ -60,8 +60,8 @@ class MOACDataset:
         # return torch.from_numpy(gt_array).float(),\
         #       torch.from_numpy(noised_hinv_deconv_mat).float(), \
         #     torch.from_numpy(gt_sum).float()
-        noised_hinv_deconv_mat = np.array([noised_hinv_deconv_mat.real,noised_hinv_deconv_mat.imag],\
-                                    dtype=float)    # 2xHxW
+        # noised_hinv_deconv_mat = np.array([noised_hinv_deconv_mat.real,noised_hinv_deconv_mat.imag],\
+        #                             dtype=float)    # 2xHxW
         noised_comb = np.array([noised_hinv_deconv_mat.real,
                                 noised_hinv_deconv_mat.imag,
                                 noised_array_ori[:,:-1].real,
