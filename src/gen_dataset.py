@@ -113,10 +113,10 @@ def distortion_func(image:np.ndarray,h_coff,SNR_db=0):
     h_coff = h_coff.reshape(-1,1)
     # print(h_coff)   # debug
     hh_expand = np.tile(h_coff,(1,d_data_col.shape[1]))    # 每行是hi
-    d_data_col = d_data_col*hh_expand
+    d_data_h = d_data_col*hh_expand
     # print(hh_expand[:,:10]) # debug
     # 加卷积
-    convSame = signal.convolve2d(d_data_col, blur_kernel_r, mode='same')
+    convSame = signal.convolve2d(d_data_h, blur_kernel_r, mode='same')
     # 加噪
     convSame = awgn(convSame,SNR_db) # add white gaussian noise
     convSame = np.complex64(convSame)   # 32bit for real and imag

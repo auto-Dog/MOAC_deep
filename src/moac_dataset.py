@@ -37,7 +37,7 @@ class MOACDataset:
         gt_image = Image.open(gt_path).convert('L')
         noised_array = np.load(noised_path)['arr1']
         # 归一化 GT 图像
-        gt_array = np.array(gt_image) / 255.0
+        gt_array = np.array(gt_image).astype('float32') / 255.0
         gt_sum = np.sum(gt_array,axis=0)
 
         # 归一化噪声图像
@@ -62,10 +62,10 @@ class MOACDataset:
         #     torch.from_numpy(gt_sum).float()
         # noised_hinv_deconv_mat = np.array([noised_hinv_deconv_mat.real,noised_hinv_deconv_mat.imag],\
         #                             dtype=float)    # 2xHxW
-        noised_comb = np.array([noised_hinv_deconv_mat.real,
-                                noised_hinv_deconv_mat.imag,
-                                noised_array_ori[:,:-1].real,
-                                noised_array_ori[:,:-1].imag],dtype=float)    # 4xHxW
+        noised_comb = np.array([noised_array_ori[:,:-1].real,
+                                noised_array_ori[:,:-1].imag,
+                                noised_hinv_deconv_mat.real,
+                                noised_hinv_deconv_mat.imag,],dtype=float)    # 4xHxW
         # print(noised_comb.size())   # debug
         return torch.from_numpy(gt_array).float(),\
               torch.from_numpy(noised_comb).float(),\
