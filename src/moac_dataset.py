@@ -42,7 +42,6 @@ class MOACDataset:
 
         # 归一化噪声图像
         noised_array_ori = noised_array.copy() # 需要和gen_dataset同步更改
-        noised_array = noised_array_ori[:,:,0] + 1j*noised_array_ori[:,:,1] # 转成复数矩阵
         # 文件名中隐含了信道信息（作为信道种子）
         hh_array_seed = self.filename_GT[index]
         hh_array_seed = int(hh_array_seed[0:5])
