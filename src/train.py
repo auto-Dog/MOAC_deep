@@ -28,7 +28,7 @@ args = parser.parse_args()
 ### write model configs here
 root =  '/kaggle/working/MOAC_deep/'
 save_root = './run'
-pth_location = '../model_Umod1.pth'
+pth_location = '../model_Umod5.pth'
 logger = Logger(save_root)
 logger.global_step = 0
 n_splits = 5
@@ -72,9 +72,10 @@ def train(trainloader, validloader, model, criterion, optimizer, lrsch, logger, 
         sum_mse = criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)
         # print(sum_mse)  # debug
         mse_list.append(sum_mse.cpu().detach())
-    wiener_mse = criterion(torch.sum(noised.cuda()[:,2:3,:,:].squeeze(),dim=1),gt_sum).cpu().detach()
+    wiener_mse = criterion(torch.sum(noised.cuda()[0:2,2,:,:].squeeze(),dim=1),gt_sum).cpu().detach()   # 取前两个样本
+    net_mse = criterion(torch.sum(outs.cuda()[0:2,:,:,:].squeeze(1),dim=1),gt_sum).cpu().detach()
     print('Compare with Wiener MSE:',wiener_mse)    # compare with winener mse
-    print('Network MSE:',sum_mse.cpu().detach())
+    print('Network MSE:',net_mse)
     loss_logger /= len(trainloader)
     print("Train loss:",loss_logger)
     log_metric('Train', mse_list, logger,loss_logger)
@@ -98,9 +99,10 @@ def test(testloader, model, criterion, optimizer, lrsch, logger, args):
         loss_logger += loss_batch.item()    # 显示全部loss
         sum_mse = criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)
         mse_list.append(sum_mse.cpu().detach())
-    wiener_mse = criterion(torch.sum(noised.cuda()[:,2,:,:].squeeze(),dim=1),gt_sum).cpu().detach()
+    wiener_mse = criterion(torch.sum(noised.cuda()[0:2,2,:,:].squeeze(),dim=1),gt_sum).cpu().detach()   # 取前两个样本
+    net_mse = criterion(torch.sum(outs.cuda()[0:2,:,:,:].squeeze(1),dim=1),gt_sum).cpu().detach()
     print('Compare with Wiener MSE:',wiener_mse)    # compare with winener mse
-    print('Network MSE:',sum_mse.cpu().detach())
+    print('Network MSE:',net_mse)
     loss_logger /= len(testloader)
     print("Val loss:",loss_logger)
 

@@ -1,3 +1,4 @@
 debug/
 dataset/
+dataset/archive/
 *.pth
