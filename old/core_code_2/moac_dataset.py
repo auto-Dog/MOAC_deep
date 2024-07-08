@@ -35,13 +35,14 @@ class MOACDataset:
         # print(self.filename_GT[index],self.filename_noised[index]) # debug
         # 读取图像
         gt_image = Image.open(gt_path).convert('L')
-        noised_array = np.load(noised_path)
+        noised_image = Image.open(noised_path).convert('RGB')   # 只有RG通道有效，作为实部和虚部
+
         # 归一化 GT 图像
         gt_array = np.array(gt_image) / 255.0
         gt_sum = np.sum(gt_array,axis=0)
 
         # 归一化噪声图像
-        noised_array_ori = noised_array.copy() # 需要和gen_dataset同步更改
+        noised_array_ori = np.array(noised_image) / 255.0 * 10. # 需要和gen_dataset同步更改
         noised_array = noised_array_ori[:,:,0] + 1j*noised_array_ori[:,:,1] # 转成复数矩阵
         # 文件名中隐含了信道信息（作为信道种子）
         hh_array_seed = self.filename_GT[index]
@@ -56,17 +57,16 @@ class MOACDataset:
 
         # 模型的第一阶段，由于采用numpy实现，故在getitem步骤直接执行，将第一步结果发给模型做第二步恢复
         _,noised_hinv_deconv_mat = pre_deconv(noised_seq,self.M_users,self.L_symbols,h_coff,SNR_db)
+        noised_hinv_deconv_mat = np.array([noised_hinv_deconv_mat.real,noised_hinv_deconv_mat.imag],\
+                                          dtype=float)    # 2xHxW
         gt_array = np.expand_dims(gt_array,axis=0)  # 和1xHxW输出对齐
         # 返回 GT 和噪声图像的数组
         # return torch.from_numpy(gt_array).float(),\
         #       torch.from_numpy(noised_hinv_deconv_mat).float(), \
         #     torch.from_numpy(gt_sum).float()
-        noised_hinv_deconv_mat = np.array([noised_hinv_deconv_mat.real,noised_hinv_deconv_mat.imag],\
-                                    dtype=float)    # 2xHxW
-        noised_comb = np.array([noised_hinv_deconv_mat.real,
-                                noised_hinv_deconv_mat.imag,
-                                noised_array_ori[:,:-1].real,
-                                noised_array_ori[:,:-1].imag],dtype=float)    # 4xHxW
+        noised_comb = torch.cat((torch.from_numpy(noised_array_ori[:,:-1,0]).float().unsqueeze(0),\
+                                 torch.from_numpy(noised_array_ori[:,:-1,1]).float().unsqueeze(0),\
+                                 torch.from_numpy(noised_hinv_deconv_mat).float()),dim=0)    # 4xHxW
         # print(noised_comb.size())   # debug
         return torch.from_numpy(gt_array).float(),\
               noised_comb,\

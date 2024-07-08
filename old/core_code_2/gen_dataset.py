@@ -78,9 +78,10 @@ def generate_gt_and_noised_images(file_list, gt_path, noised_path):
             SNR_db = random.randint(-4, 4)*5    # -20dB ~ 20dB
             np.random.seed(file_name+2)
             h_coff = np.exp(1j*np.random.uniform(0,1,(14,1)) * 4* np.pi /4) # e^j0 ~ e^j pi
-            noised_array = distortion_func(shuffled_slices,h_coff,SNR_db)
-            np.savez_compressed(os.path.join(noised_path, f'{file_name:05d}_snr{SNR_db}.npz'), arr1=noised_array)
-   
+            noised_image = distortion_func(shuffled_slices,h_coff,SNR_db)
+            noised_image = Image.fromarray(noised_image)
+            noised_image.save(os.path.join(noised_path, f'{file_name:05d}_snr{SNR_db}.png'))
+
 def awgn(x, snr):
     '''Add AWGN(complex)
     x: numpy array
@@ -119,7 +120,13 @@ def distortion_func(image:np.ndarray,h_coff,SNR_db=0):
     convSame = signal.convolve2d(d_data_col, blur_kernel_r, mode='same')
     # 加噪
     convSame = awgn(convSame,SNR_db) # add white gaussian noise
-    convSame = np.complex64(convSame)   # 32bit for real and imag
+    # print(np.sum(convSame.real),np.sum(convSame.imag))  # debug
+    convSame = np.array([convSame.real,convSame.imag,np.zeros_like(convSame.real)])# 为保证计算效率，此处分离复数实部虚部
+    # convSame = (convSame-np.min(convSame))/(np.max(convSame)-np.min(convSame)) # 不能随意归一化！将导致卷积结果不能被维纳滤波准确估计
+    convSame = np.clip(convSame*10.,0,255)
+    convSame = np.uint8(convSame)
+    convSame = np.transpose(convSame, (1, 2, 0)) # HxWxC
+    # convSame = torch.from_numpy(convSame)   # 注意：在显卡上运行时，此处加cuda()
     return convSame
 
 # 生成训练集GT和噪声图像
