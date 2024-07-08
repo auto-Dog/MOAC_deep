@@ -35,7 +35,7 @@ class MOACDataset:
         # print(self.filename_GT[index],self.filename_noised[index]) # debug
         # 读取图像
         gt_image = Image.open(gt_path).convert('L')
-        noised_array = np.load(noised_path)
+        noised_array = np.load(noised_path)['arr1']
         # 归一化 GT 图像
         gt_array = np.array(gt_image) / 255.0
         gt_sum = np.sum(gt_array,axis=0)
