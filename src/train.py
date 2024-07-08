@@ -72,8 +72,8 @@ def train(trainloader, validloader, model, criterion, optimizer, lrsch, logger, 
         sum_mse = criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)
         # print(sum_mse)  # debug
         mse_list.append(sum_mse.cpu().detach())
-    wiener_mse = criterion(torch.sum(noised.cuda()[0:2,2,:,:].squeeze(),dim=1),gt_sum[0:2,...]).cpu().detach()   # 取前两个样本
-    net_mse = criterion(torch.sum(outs.cuda()[0:2,:,:,:].squeeze(1),dim=1),gt_sum[0:2,...]).cpu().detach()
+    wiener_mse = criterion(torch.sum(noised.cuda()[:,2,:,:].squeeze(),dim=1),gt_sum).cpu().detach()   # 取前两个样本
+    net_mse = criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum).cpu().detach()
     print('Compare with Wiener MSE:',wiener_mse)    # compare with winener mse
     print('Network MSE:',net_mse)
     loss_logger /= len(trainloader)
@@ -99,8 +99,8 @@ def test(testloader, model, criterion, optimizer, lrsch, logger, args):
         loss_logger += loss_batch.item()    # 显示全部loss
         sum_mse = criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)
         mse_list.append(sum_mse.cpu().detach())
-    wiener_mse = criterion(torch.sum(noised.cuda()[0:2,2,:,:].squeeze(),dim=1),gt_sum[0:2,...]).cpu().detach()   # 取前两个样本
-    net_mse = criterion(torch.sum(outs.cuda()[0:2,:,:,:].squeeze(1),dim=1),gt_sum[0:2,...]).cpu().detach()
+    wiener_mse = criterion(torch.sum(noised.cuda()[:,2,:,:].squeeze(),dim=1),gt_sum).cpu().detach()   # 取前两个样本
+    net_mse = criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum).cpu().detach()
     print('Compare with Wiener MSE:',wiener_mse)    # compare with winener mse
     print('Network MSE:',net_mse)
     loss_logger /= len(testloader)
