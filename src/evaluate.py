@@ -91,7 +91,7 @@ for db_iter in range(5):
         noised_seq = y_mat.T.reshape(-1) # M x L -> ML x 1 seq
         y_out = noised_seq[:-1]  # 得到过采样有噪失真序列
 
-
+        # 1. aligned estimation
 
         MthFiltersIndex = (np.arange(L_symbols) + 1) * M_users - 1
         output = y_out[MthFiltersIndex]
@@ -151,7 +151,7 @@ for db_iter in range(5):
         mse_record[db_iter,2,avg_iter] = mse_val
         # 4. Our estimation
 
-        output,image = inference(y_out.flatten(),'../model_Umod5.pth',M_users,L_symbols,h_coff,0)
+        output,image = inference(y_out.flatten(),'../model_Umod5.pth',M_users,L_symbols,h_coff,SNR_db_global)
         image = image.real
         # print('Our result:',np.mean(np.abs(np.sum(image,axis=0)-np.sum(d_data,axis=0))**2))
         mse_val = np.mean(np.abs(np.sum(image,axis=0)-np.sum(d_data,axis=0))**2)
@@ -163,7 +163,7 @@ for db_iter in range(5):
         pad_len = len(y_out1)
         blur_kernel_1d = np.array([1.]*M_users)
         blur_kernel_1d = np.hstack((blur_kernel_1d,np.array([0]*(pad_len-len(blur_kernel_1d)))))
-        x_re_pad = wiener_deconv(y_out1,blur_kernel_1d,0)   # 低SNR下，用更低的SNR估计取得效果更好
+        x_re_pad = wiener_deconv(y_out1,blur_kernel_1d,SNR_db_global)   # 低SNR下，用更低的SNR估计取得效果更好
         x_re_mat = x_re_pad[:L_symbols*M_users].reshape(L_symbols,M_users).T
         hh_expand = np.tile(h_coff,(1,L_symbols))    # 每行是hi
         x_re_mat = x_re_mat/hh_expand
