@@ -9,7 +9,7 @@ import numpy as np
 ## MAIN SETTINGS ##
 M_users = 14
 L_symbols = 256
-loaded_image = Image.open('../test_images/data_2.png').convert('L')
+loaded_image = Image.open('../test_images/data_3.png').convert('L')
 loaded_array = np.array(loaded_image)
 # d_data = (loaded_array.astype('float32') - 128) / 20.  # 将0-255的整数转换回小数
 d_data = loaded_array.astype('float32') / 255.
