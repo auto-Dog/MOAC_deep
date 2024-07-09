@@ -174,3 +174,5 @@ for db_iter in range(5):
         mse_record[db_iter,4,avg_iter] = mse_val
     print('SNR=',SNR_db_global,mse_record[db_iter,:,0])
 
+mse_record_mean = np.mean(mse_record,axis=2)
+np.savetxt('MSE_result.csv',mse_record_mean,delimiter=",")
