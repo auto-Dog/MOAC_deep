@@ -36,7 +36,7 @@ os.makedirs(test_noised_path, exist_ok=True)
 # train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True)
 # test_loader = DataLoader(test_dataset, batch_size=1, shuffle=True)
 
-train_files = ['20160930_203718.csv','20161001_231809.csv','20161007_210049.csv','20161011_113032.csv','20161006_182224.csv']
+train_files = ['20160930_203718.csv','20161001_231809.csv','20161007_210049.csv','20161011_113032.csv','20161006_182224.csv','20161008_234508.csv']
 test_files = ['20161014_184659.csv','20161016_053656.csv']
 
 def generate_gt_and_noised_images(file_list, gt_path, noised_path):
@@ -52,7 +52,7 @@ def generate_gt_and_noised_images(file_list, gt_path, noised_path):
         # print(sensor_array[:2,:])  # debug
         total_len = sensor_array.shape[0]
         for i in range(total_len//256-1):
-            start_index = i*256+np.random.randint(0,20) # 随机选择起点
+            start_index = i*256+np.random.randint(0,80) # 随机选择起点
             data_slice = sensor_array[start_index:start_index+256,:]
             data_slice = data_slice.T   # 14x256
             file_name = file_i*1000+i
