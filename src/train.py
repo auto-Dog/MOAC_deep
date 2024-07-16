@@ -68,7 +68,7 @@ def train(trainloader, validloader, model, criterion, optimizer, lrsch, logger, 
         loss_batch.backward()
         loss_logger += loss_batch.item()    # 显示全部loss
         optimizer.step()
-        # lrsch.step()
+        lrsch.step()
         sum_mse = criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)
         # print(sum_mse)  # debug
         mse_list.append(sum_mse.cpu().detach())
