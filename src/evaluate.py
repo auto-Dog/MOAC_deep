@@ -26,8 +26,8 @@ def awgn(x, snr):
     len_x = x.flatten().shape[0]
     Ps = np.sum(np.abs(x)**2) / len_x
     Pn = Ps / (np.power(10, snr / 10))
-    noise_r = np.random.randn(x.shape[0],x.shape[1]) * np.sqrt(Pn)/2
-    noise_i = np.random.randn(x.shape[0],x.shape[1]) * np.sqrt(Pn)/2
+    noise_r = np.random.randn(x.shape[0],x.shape[1]) * np.sqrt(Pn)/np.sqrt(2)
+    noise_i = np.random.randn(x.shape[0],x.shape[1]) * np.sqrt(Pn)/np.sqrt(2)
     noise = noise_r + 1j*noise_i
     return x + noise
 
