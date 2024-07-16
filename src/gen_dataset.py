@@ -75,7 +75,7 @@ def generate_gt_and_noised_images(file_list, gt_path, noised_path):
 
             # 生成噪声图像, 训练时，根据seed直接可以得出SNR，h_coff
             random.seed(file_name+1)
-            SNR_db = random.randint(-4, 4)*5    # -20dB ~ 20dB
+            SNR_db = random.randint(0, 4)*5    # -20dB ~ 20dB
             np.random.seed(file_name+2)
             h_coff = np.exp(1j*np.random.uniform(0,1,(14,1)) * 4* np.pi /4) # e^j0 ~ e^j pi
             noised_array = distortion_func(shuffled_slices,h_coff,SNR_db)
