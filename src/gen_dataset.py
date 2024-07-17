@@ -62,10 +62,10 @@ def generate_gt_and_noised_images(file_list, gt_path, noised_path):
             # 随机打乱4-6行
             random.seed(file_name)
             num_rows_to_shuffle = random.randint(4, 6)
-            rows_to_shuffle = random.sample(range(14), num_rows_to_shuffle)
+            rows_to_shuffle = random.sample(range(M_users), num_rows_to_shuffle)
             shuffled_slices = data_slice.copy()
             for row in rows_to_shuffle:
-                random_row = random.choice(list(set(range(14)) - {row}))
+                random_row = random.choice(list(set(range(M_users)) - {row}))
                 shuffled_slices[row, :] = data_slice[random_row, :]
             # print(shuffled_slices.shape)    # debug
             # 转换为PIL图像并保存
@@ -80,7 +80,7 @@ def generate_gt_and_noised_images(file_list, gt_path, noised_path):
             # SNR_db = random.randint(0, 4)*5    # -20dB ~ 20dB
             SNR_db = 0.0 # only for specific task.
             np.random.seed(file_name+2)
-            h_coff = np.exp(1j*np.random.uniform(0,1,(14,1)) * 4* np.pi /4) # e^j0 ~ e^j pi
+            h_coff = np.exp(1j*np.random.uniform(0,1,(M_users,1)) * 4* np.pi /4) # e^j0 ~ e^j pi
             noised_array = distortion_func(shuffled_slices,h_coff,SNR_db)
             np.savez_compressed(os.path.join(noised_path, f'{file_name:05d}_snr{SNR_db}.npz'), arr1=noised_array)
    
