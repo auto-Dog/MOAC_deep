@@ -43,7 +43,6 @@ test_loader = DataLoader(test_dataset, batch_size=1, shuffle=True)
 
 def generate_gt_and_noised_images(loader, gt_path, noised_path):
     # 处理数据集中的每一张图像
-    root = '/kaggle/input/gas-sensor-array-temperature-modulation'
     for i, (image, _) in tqdm(enumerate(loader)):
         file_name = i
         image = image.squeeze(0).squeeze(0)  # 去掉批次和通道维度

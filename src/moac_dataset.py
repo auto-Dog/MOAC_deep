@@ -24,8 +24,8 @@ class MOACDataset:
         
         self.filename_GT = file_to_list(self.gt_dir)
         self.filename_noised = file_to_list(self.noised_dir)
-        self.M_users = 14
-        self.L_symbols = 256
+        self.M_users = 64
+        self.L_symbols = 64
 #         print(self.filename_GT[0:10],self.filename_noised[0:10])# debug
 
     def __getitem__(self, index):
