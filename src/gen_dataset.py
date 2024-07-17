@@ -10,6 +10,8 @@ from scipy import signal
 from tqdm import tqdm
 import pandas
 
+M_users = 14
+L_symbols = 256
 # 定义文件夹路径
 train_gt_path = '../dataset/train/GT'
 train_noised_path = '../dataset/train/noised'
@@ -99,7 +101,7 @@ def distortion_func(image:np.ndarray,h_coff,SNR_db=0):
     np.random.seed()   # 保证噪声随机化
     # image = image.numpy()
     image = (image-np.min(image))/(80.-np.min(image)) # 归一化
-    M_users = 14
+    # 2d卷积方案
     blur_kernel = np.zeros((2*M_users-1,3))
     kernel_height = 2*M_users-1
     blur_kernel[0:M_users,1] = 1.
