@@ -48,8 +48,8 @@ def generate_gt_and_noised_images(loader, gt_path, noised_path):
         file_name = i
         image = image.squeeze(0).squeeze(0)  # 去掉批次和通道维度
         # 转换为PIL图像并保存
-        gt_image = transforms.ToPILImage()(image)
-        gt_image.save(os.path.join(gt_path, f'{file_name:05d}.png'))
+        gt_image_pil = transforms.ToPILImage()(image)
+        gt_image_pil.save(os.path.join(gt_path, f'{file_name:05d}.png'))
 
         # 生成噪声图像, 训练时，根据seed直接可以得出SNR，h_coff
         random.seed(file_name+1)
@@ -57,7 +57,7 @@ def generate_gt_and_noised_images(loader, gt_path, noised_path):
         SNR_db = 0.0 # only for specific task.
         np.random.seed(file_name+2)
         h_coff = np.exp(1j*np.random.uniform(0,1,(M_users,1)) * 4* np.pi /4) # e^j0 ~ e^j pi
-        noised_array = distortion_func(gt_image.numpy(),h_coff,SNR_db)
+        noised_array = distortion_func(image.numpy(),h_coff,SNR_db)
         np.savez_compressed(os.path.join(noised_path, f'{file_name:05d}_snr{SNR_db}.npz'), arr1=noised_array)
    
 def awgn(x, snr):
