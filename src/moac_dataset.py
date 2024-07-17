@@ -49,7 +49,8 @@ class MOACDataset:
         h_coff = np.exp(1j*np.random.uniform(0,1,(self.M_users,1)) * 4* np.pi /4).reshape(-1,1) # e^j0 ~ e^j pi
         # 文件名中隐含了SNR信息（作为种子）
         random.seed(hh_array_seed+1)
-        SNR_db = random.randint(0, 4)*5    # -20dB ~ 20dB
+        # SNR_db = random.randint(0, 4)*5    # -20dB ~ 20dB
+        SNR_db = 0.0 # only for specific task.
         noised_seq = noised_array.T.reshape(-1) # M x L -> ML x 1 seq
         noised_seq = noised_seq[:-1]  # 得到过采样有噪失真序列
 
