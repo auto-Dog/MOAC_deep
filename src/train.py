@@ -28,7 +28,7 @@ args = parser.parse_args()
 ### write model configs here
 root =  '/kaggle/working/MOAC_deep/'
 save_root = './run'
-pth_location = '../model_Ures_snr0.pth'
+pth_location = '../model_Umod_snr0.pth'
 logger = Logger(save_root)
 logger.global_step = 0
 n_splits = 5
