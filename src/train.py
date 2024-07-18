@@ -14,6 +14,7 @@ from utils.logger import Logger
 from tqdm import tqdm
 from restore_module import TinyUNet
 from moac_dataset import MOACDataset
+from utils.edge_loss import EdgeLoss
 
 # argparse here
 parser = argparse.ArgumentParser(description='MOAC-UNET')
@@ -47,6 +48,7 @@ model = TinyUNet(4,1,bilinear=True)
 model = model.cuda()
 
 criterion = nn.MSELoss()
+criterion2 = EdgeLoss()
 optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr, weight_decay=0.1)
 
 lrsch = torch.optim.lr_scheduler.MultiStepLR(optimizer,milestones=[7,20],gamma=0.3)
@@ -64,7 +66,7 @@ def train(trainloader, validloader, model, criterion, optimizer, lrsch, logger, 
         # print("opt tensor:",out)
         gt = gt.cuda()
         gt_sum = gt_sum.cuda()
-        loss_batch = 100*criterion(outs,gt) + criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)
+        loss_batch = 100*criterion(outs,gt) + criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum) + criterion2(outs,gt)
         loss_batch.backward()
         loss_logger += loss_batch.item()    # 显示全部loss
         optimizer.step()
@@ -95,7 +97,7 @@ def test(testloader, model, criterion, optimizer, lrsch, logger, args):
         gt_sum = gt_sum.cuda()
         # print("label:",label)
         
-        loss_batch = 100*criterion(outs,gt) + criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)
+        loss_batch = 100*criterion(outs,gt) + criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum) + criterion2(outs,gt)
         loss_logger += loss_batch.item()    # 显示全部loss
         sum_mse = criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)
         mse_list.append(sum_mse.cpu().detach())
