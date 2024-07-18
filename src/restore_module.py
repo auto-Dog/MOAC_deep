@@ -90,11 +90,11 @@ class TinyUNet(nn.Module):
 
         self.inc = (DoubleConv(n_channels, 64))
         self.down1 = (Down(64, 128))
-        # self.down2 = (Down(128, 256 // factor))
-        # test deepen the network
-        self.down2 = (Down(128, 256))
-        self.down3 = (Down(256, 512 // factor))
-        self.up0 = (Up(512, 256 // factor, bilinear))
+        self.down2 = (Down(128, 256 // factor))
+        # # test deepen the network
+        # self.down2 = (Down(128, 256))
+        # self.down3 = (Down(256, 512 // factor))
+        # self.up0 = (Up(512, 256 // factor, bilinear))
 
         self.up1 = (Up(256, 128 // factor, bilinear))   # C: 128 + 128, max channel 256
         self.up2 = (Up(128, 64, bilinear))
@@ -104,12 +104,12 @@ class TinyUNet(nn.Module):
         x1 = self.inc(x)
         x2 = self.down1(x1)
         x3 = self.down2(x2)
-        # test deepen the network
-        x4 = self.down3(x3)
-        x = self.up0(x4,x3)
-        x = self.up1(x, x2)
+        # # test deepen the network
+        # x4 = self.down3(x3)
+        # x = self.up0(x4,x3)
+        # x = self.up1(x, x2)
 
-        # x = self.up1(x3, x2)
+        x = self.up1(x3, x2)
         x = self.up2(x, x1)
         # xc = x1 + x     # residual path
         logits = self.outc(x)  # use xc if enable residual path, otherwise x
