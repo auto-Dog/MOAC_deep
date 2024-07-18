@@ -111,8 +111,8 @@ class TinyUNet(nn.Module):
 
         x = self.up1(x3, x2)
         x = self.up2(x, x1)
-        xc = x1 + x     # residual path
-        logits = self.outc(xc)  # use xc if enable residual path, otherwise x
+        # xc = x1 + x     # residual path
+        logits = self.outc(x)  # use xc if enable residual path, otherwise x
         return logits
 
     
