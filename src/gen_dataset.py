@@ -24,20 +24,6 @@ os.makedirs(train_noised_path, exist_ok=True)
 os.makedirs(test_gt_path, exist_ok=True)
 os.makedirs(test_noised_path, exist_ok=True)
 
-# # 定义灰度转换和上采样的transform
-# transform = transforms.Compose([
-#     transforms.Grayscale(),
-#     transforms.ToTensor(),
-#     transforms.Resize((64, 64),antialias=False),    # 注意：必须先转成tensor再进行无锯齿缩放。否则图像会因为抗锯齿插值算法变模糊
-# ])
-
-# # 加载CIFAR-10数据集
-# train_dataset = CIFAR10(root='../dataset/data', train=True, download=True, transform=transform)
-# test_dataset = CIFAR10(root='../dataset/data', train=False, download=True, transform=transform)
-
-# train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True)
-# test_loader = DataLoader(test_dataset, batch_size=1, shuffle=True)
-
 train_files = ['20160930_203718.csv','20161001_231809.csv','20161007_210049.csv','20161011_113032.csv','20161006_182224.csv','20161008_234508.csv']
 test_files = ['20161014_184659.csv','20161016_053656.csv']
 
@@ -77,8 +63,8 @@ def generate_gt_and_noised_images(file_list, gt_path, noised_path):
 
             # 生成噪声图像, 训练时，根据seed直接可以得出SNR，h_coff
             random.seed(file_name+1)
-            # SNR_db = random.randint(0, 4)*5    # -20dB ~ 20dB
-            SNR_db = 0.0 # only for specific task.
+            SNR_db = random.randint(0, 4)*5    # -20dB ~ 20dB
+            # SNR_db = 0.0 # only for specific task.
             np.random.seed(file_name+2)
             h_coff = np.exp(1j*np.random.uniform(0,1,(M_users,1)) * 4* np.pi /4) # e^j0 ~ e^j pi
             noised_array = distortion_func(shuffled_slices,h_coff,SNR_db)

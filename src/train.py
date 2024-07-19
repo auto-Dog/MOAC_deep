@@ -29,7 +29,7 @@ args = parser.parse_args()
 ### write model configs here
 root =  '/kaggle/working/MOAC_deep/'
 save_root = './run'
-pth_location = '../model_Umod_snr0.pth'
+pth_location = '../model_wd.pth'
 logger = Logger(save_root)
 logger.global_step = 0
 n_splits = 5
@@ -62,13 +62,13 @@ def train(trainloader, validloader, model, criterion, optimizer, lrsch, logger, 
     logger.update_step()
     for gt, noised, gt_sum in tqdm(trainloader,ascii=True,ncols=60):
         optimizer.zero_grad()
-        outs = model(noised.cuda())   # 列表参数是否要cuda？
+        outs = model(noised.cuda())   
         # print("opt tensor:",out)
         gt = gt.cuda()
         gt_sum = gt_sum.cuda()
         loss_batch = 100*criterion(outs,gt) + criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)
         loss_batch.backward()
-        loss_logger += loss_batch.item()    # 显示全部loss
+        loss_logger += loss_batch.item()    
         optimizer.step()
         lrsch.step()
         sum_mse = criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)
@@ -98,7 +98,7 @@ def test(testloader, model, criterion, optimizer, lrsch, logger, args):
         # print("label:",label)
         
         loss_batch = 100*criterion(outs,gt) + criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)
-        loss_logger += loss_batch.item()    # 显示全部loss
+        loss_logger += loss_batch.item()    
         sum_mse = criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)
         mse_list.append(sum_mse.cpu().detach())
     # wiener_mse = criterion(torch.sum(noised.cuda()[:,2,:,:].squeeze(),dim=1),gt_sum).cpu().detach()   # 取前两个样本
