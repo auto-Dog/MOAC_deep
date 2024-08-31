@@ -61,7 +61,7 @@ class MLP_Net(nn.Module):
 
 
     def forward(self,x):
-        padded_image = F.pad(x, (0, 14 - x.shape[3] % 14, 0, 14 - x.shape[2] % 14),value=)
+        padded_image = F.pad(x, (0, 14 - x.shape[3] % 14, 0, 14 - x.shape[2] % 14),value=0)
         x_patches = self.patch_slice(x)
         x_patches = self.mlp_layers(x_patches)
         out = self.patch_recover(x_patches)
