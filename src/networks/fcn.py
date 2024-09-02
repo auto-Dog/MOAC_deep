@@ -25,7 +25,8 @@ class FCN(nn.Module):
         for sub_mid_layer in self.mid_layer:
             n = sub_mid_layer(n)
         n = self.out_layer(n)   # residual
-        out = x-n
+        # out = x-n   # not clear for channel selection for x
+        out = n
         return out
     
     def _layer_unit(self,layer_id):
