@@ -61,15 +61,18 @@ class MLP_Net(nn.Module):
 
 
     def forward(self,x):
-        padded_image = F.pad(x, (0, 14 - x.shape[3] % 14, 0, 14 - x.shape[2] % 14),value=0)
-        x_patches = self.patch_slice(x)
+        ob,oc,oh,ow = x.shape
+        padded_image = F.pad(x, (0, 13 - (x.shape[3]-1) % 14, 
+                                 0, 13 - (x.shape[2]-1) % 14))
+        x_patches = self.patch_slice(padded_image)
         x_patches = self.mlp_layers(x_patches)
         out = self.patch_recover(x_patches)
+        out = out[:,:,:oh,:ow]  # crop
         return out
     
 
 if __name__ == '__main__':
-    input_images = torch.randn((2,4,14,266))
+    input_images = torch.randn((2,4,14,256))
     network = MLP_Net(4,1)
     out = network(input_images)
     print(out.shape)

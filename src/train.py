@@ -13,7 +13,7 @@ from sklearn.metrics import classification_report, roc_auc_score, roc_curve, acc
 from utils.logger import Logger
 from tqdm import tqdm
 from restore_module import TinyUNet
-from networks.fcn import FCN    # optional for experiments
+from networks.patch_mlp import MLP_Net    # optional for experiments
 from moac_dataset import MOACDataset
 # from utils.edge_loss import EdgeLoss
 
@@ -30,7 +30,7 @@ args = parser.parse_args()
 ### write model configs here
 root =  '/kaggle/working/MOAC_deep/'
 save_root = './run'
-pth_location = '../model_FCN.pth'
+pth_location = '../model_MLP.pth'
 logger = Logger(save_root)
 logger.global_step = 0
 n_splits = 5
@@ -46,7 +46,7 @@ testloader = torch.utils.data.DataLoader(testset,batch_size=args.batchsize,shuff
 # trainval_loader = {'train' : trainloader, 'valid' : validloader}
 
 # model = TinyUNet(4,1,bilinear=True)
-model = FCN(4,1)
+model = MLP_Net(4,1)
 model = model.cuda()
 
 criterion = nn.MSELoss()
