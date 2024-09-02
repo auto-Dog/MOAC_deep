@@ -33,17 +33,21 @@ save_root = './run'
 pth_location = '../model_MLP.pth'
 logger = Logger(save_root)
 logger.global_step = 0
-n_splits = 5
+# n_splits = 5
+train_val_percent = 0.8
 # os.environ["CUDA_VISIBLE_DEVICES"] = '0,1'
 # skf = StratifiedGroupKFold(n_splits=n_splits)
 
 trainset = MOACDataset('/kaggle/working/MOAC_deep/dataset', 'train')
 testset = MOACDataset('/kaggle/working/MOAC_deep/dataset', 'test')
 
-trainloader = torch.utils.data.DataLoader(trainset,batch_size=args.batchsize,shuffle = True)
-testloader = torch.utils.data.DataLoader(testset,batch_size=args.batchsize,shuffle = False)
+train_size = int(len(trainset) * train_val_percent)
+val_size = len(trainset) - train_size
+trainset, valset = torch.utils.data.random_split(trainset, [train_size, val_size])
 
-# trainval_loader = {'train' : trainloader, 'valid' : validloader}
+trainloader = torch.utils.data.DataLoader(trainset,batch_size=args.batchsize,shuffle = True)
+valloader = torch.utils.data.DataLoader(valset,batch_size=args.batchsize,shuffle = True)
+testloader = torch.utils.data.DataLoader(testset,batch_size=args.batchsize,shuffle = False)
 
 # model = TinyUNet(4,1,bilinear=True)
 model = MLP_Net(4,1)
@@ -56,7 +60,7 @@ optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters(
 lrsch = torch.optim.lr_scheduler.MultiStepLR(optimizer,milestones=[7,20],gamma=0.3)
 logger.auto_backup('./')
 
-def train(trainloader, validloader, model, criterion, optimizer, lrsch, logger, args, epoch):
+def train(trainloader, model, criterion, optimizer, lrsch, logger, args, epoch):
     model.train()
     losses = 0.
     loss_logger = 0.
@@ -86,13 +90,13 @@ def train(trainloader, validloader, model, criterion, optimizer, lrsch, logger, 
     if not (logger.global_step % args.save_interval):
         logger.save(model,optimizer, lrsch, criterion)
         
-def test(testloader, model, criterion, optimizer, lrsch, logger, args):
+def validate(valloader, model, criterion, optimizer, lrsch, logger, args):
     model.eval()
     losses = 0.
     loss_logger = 0.
     mse_list = []
 
-    for gt, noised, gt_sum in tqdm(testloader,ascii=True,ncols=60):
+    for gt, noised, gt_sum in tqdm(valloader,ascii=True,ncols=60):
         with torch.no_grad():
             outs = model(noised.cuda())
         gt = gt.cuda()
@@ -107,13 +111,15 @@ def test(testloader, model, criterion, optimizer, lrsch, logger, args):
     # net_mse = criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum).cpu().detach()
     # print('Compare with Wiener MSE:',wiener_mse)    # compare with winener mse
     # print('Network MSE:',net_mse)
-    loss_logger /= len(testloader)
+    loss_logger /= len(valloader)
     print("Val loss:",loss_logger)
 
-    avg_mse = log_metric('Test', mse_list, logger,loss_logger)
+    avg_mse = log_metric('Val', mse_list, logger,loss_logger)
 
     return 10./avg_mse, model.state_dict()  # mse取逆，作为分数（mse越低分数越高）
         
+test = validate # reuse function
+
 def log_metric(prefix,mse,logger,loss):
     avg_mse = np.mean(np.array(mse))
     # auc = roc_auc_score(target, prob)
@@ -127,9 +133,11 @@ if __name__=='__main__':
     score_last = 0
     for i in range(args.epoch):
         print("===========Epoch:{}==============".format(i))
-        train(trainloader,testloader, model,criterion,optimizer,lrsch,logger,args,i)
-        score, model_save = test(testloader,model,criterion,optimizer,lrsch,logger,args)
+        train(trainloader, model,criterion,optimizer,lrsch,logger,args,i)
+        score, model_save = validate(valloader,model,criterion,optimizer,lrsch,logger,args)
         if score > score_last:
             score_last = score
             print('Save result at epoch {}'.format(i))
             torch.save(model_save, pth_location)
+    print('Final testing:')
+    score,_ = test(testloader,model,criterion,optimizer,lrsch,logger,args)

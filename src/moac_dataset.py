@@ -74,7 +74,7 @@ class MOACDataset:
 
     def __len__(self):
         # 返回数据集中的样本数量
-        return len(self.filename_GT)  # 假设数据集中有1000个样本
+        return len(self.filename_GT)  
 
 if __name__ == '__main__':
     # 使用示例
