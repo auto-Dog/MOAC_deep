@@ -73,7 +73,7 @@ def train(trainloader, model, criterion, optimizer, lrsch, logger, args, epoch):
         gt = gt.cuda()
         gt_sum = gt_sum.cuda()
         # loss_batch = 100*criterion(outs,gt) + criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)
-        loss_batch = 100*criterion(outs,gt)+100*(dec,gt)+criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)    # dae only
+        loss_batch = 100*criterion(outs,gt)+100*criterion(dec,gt)+criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)    # dae only
         loss_batch.backward()
         loss_logger += loss_batch.item()    
         optimizer.step()
