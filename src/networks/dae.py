@@ -10,6 +10,7 @@ import numpy as np
 class DAE(nn.Module):
     ''' 
     Input: noisy y, no noise no blur x_true
+
     Return: estimate from y and from x, should align to x_true when training
     '''
     def __init__(self, in_channels, out_channels, mid_channels=None):

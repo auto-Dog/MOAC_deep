@@ -13,7 +13,7 @@ from sklearn.metrics import classification_report, roc_auc_score, roc_curve, acc
 from utils.logger import Logger
 from tqdm import tqdm
 from restore_module import TinyUNet
-from networks.patch_mlp import MLP_Net    # optional for experiments
+from networks.dae import DAE    # optional for experiments
 from moac_dataset import MOACDataset
 # from utils.edge_loss import EdgeLoss
 
@@ -30,7 +30,7 @@ args = parser.parse_args()
 ### write model configs here
 root =  '/kaggle/working/MOAC_deep/'
 save_root = './run'
-pth_location = '../model_MLP.pth'
+pth_location = '../model_DAE.pth'
 logger = Logger(save_root)
 logger.global_step = 0
 # n_splits = 5
@@ -50,7 +50,7 @@ valloader = torch.utils.data.DataLoader(valset,batch_size=args.batchsize,shuffle
 testloader = torch.utils.data.DataLoader(testset,batch_size=args.batchsize,shuffle = False)
 
 # model = TinyUNet(4,1,bilinear=True)
-model = MLP_Net(4,1)
+model = DAE(4,1)
 model = model.cuda()
 
 criterion = nn.MSELoss()
@@ -68,11 +68,12 @@ def train(trainloader, model, criterion, optimizer, lrsch, logger, args, epoch):
     logger.update_step()
     for gt, noised, gt_sum in tqdm(trainloader,ascii=True,ncols=60):
         optimizer.zero_grad()
-        outs = model(noised.cuda())   
+        outs,dec = model(noised.cuda(),gt.cuda())   # dae only
         # print("opt tensor:",out)
         gt = gt.cuda()
         gt_sum = gt_sum.cuda()
-        loss_batch = 100*criterion(outs,gt) + criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)
+        # loss_batch = 100*criterion(outs,gt) + criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)
+        loss_batch = 100*criterion(outs,gt)+100*(dec,gt)+criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)    # dae only
         loss_batch.backward()
         loss_logger += loss_batch.item()    
         optimizer.step()
@@ -98,7 +99,7 @@ def validate(valloader, model, criterion, optimizer, lrsch, logger, args):
 
     for gt, noised, gt_sum in tqdm(valloader,ascii=True,ncols=60):
         with torch.no_grad():
-            outs = model(noised.cuda())
+            outs,_ = model(noised.cuda(),gt.cuda())   # dae only
         gt = gt.cuda()
         gt_sum = gt_sum.cuda()
         # print("label:",label)
