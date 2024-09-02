@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from numpy import fft
 import numpy as np
 from restore_module import pre_deconv,wiener_deconv,TinyUNet
+from networks.fcn import FCN    # optional for experiments
 # PIL read image
 # y_img = y_img/255.
 # y_samples = y_img[:,:,0] +1j*y_img[:,:,1] 
@@ -23,8 +24,8 @@ def inference(y_samples,pth_tar_location,M_users, L_symbols, h_coff, SNR_db):
     return: L长序列, M*(L+1)-1长复数序列
     '''
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    # model2 = TinyUNet(2,1,bilinear=True).to(device)
-    model2 = TinyUNet(4,1,bilinear=True).to(device)
+    # model2 = TinyUNet(4,1,bilinear=True).to(device)
+    model2 = FCN(4,1).to(device)
     model2.load_state_dict(torch.load(pth_tar_location, map_location='cpu'))
     # y_samples = (y_samples-np.min(y_samples))/(np.max(y_samples)-np.min(y_samples)) # 归一化
     _,s_deconv = pre_deconv(y_samples, M_users, L_symbols, h_coff, SNR_db=SNR_db)
