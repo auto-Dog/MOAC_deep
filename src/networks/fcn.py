@@ -17,16 +17,17 @@ class FCN(nn.Module):
         )
         self.mid_layer = nn.ModuleList([self._layer_unit(i) for i in range(1,6)])
         self.out_layer = nn.Sequential(
-            nn.Conv2d(64,out_channels,kernel_size=(3,3),padding=(1,1),padding_mode='circular'),
+            nn.Conv2d(64,4,kernel_size=(3,3),padding=(1,1),padding_mode='circular'),
         )
+        self.mix_layer = nn.Conv2d(4,out_channels,kernel_size=(1,1))
 
     def forward(self,x):
         n = self.input_layer(x)
         for sub_mid_layer in self.mid_layer:
             n = sub_mid_layer(n)
         n = self.out_layer(n)   # residual
-        # out = x-n   # not clear for channel selection for x
-        out = n
+        out = x-n
+        out = self.mix_layer(out)
         return out
     
     def _layer_unit(self,layer_id):

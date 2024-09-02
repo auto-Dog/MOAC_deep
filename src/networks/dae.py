@@ -8,18 +8,22 @@ from numpy import fft
 import numpy as np
 
 class DAE(nn.Module):
+    ''' 
+    Input: noisy y, no noise no blur x_true
+    Return: estimate from y and from x, should align to x_true when training
+    '''
     def __init__(self, in_channels, out_channels, mid_channels=None):
         super(DAE,self).__init__()
         self.enc_x = Encoder(in_channels)
         self.gen_y = Encoder(in_channels)
         self.dec = Decoder(out_channels)
 
-    def forward(self,y, y_clean):
-        feature_x = self.enc_x(y_clean)
+    def forward(self,y, x_clean):
+        feature_x = self.enc_x(x_clean)
         feature_y = self.gen_y(y)
         out_x = self.dec(feature_x) # we donnot use GAN training method, instead, we align output y and y clean to x
         out_y = self.dec(feature_y)
-        return out_x,out_y
+        return out_y,out_x
 
 class Encoder(nn.Module):
     def __init__(self,in_channels):
