@@ -113,5 +113,5 @@ if __name__ == '__main__':
     input_images = torch.randn((2,4,14,256))
     input_images_c = torch.randn((2,1,14,256))
     network = DAE(4,1)
-    out1,out2 = network(input_images,input_images_c)
+    out1,out2,_,_ = network(input_images,input_images[:,0,:,:].unsqueeze(1))
     print(out1.shape, out2.shape)

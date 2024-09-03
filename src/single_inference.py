@@ -39,7 +39,7 @@ def inference(y_samples,pth_tar_location,M_users, L_symbols, h_coff, SNR_db):
     s_deconv = torch.from_numpy(s_deconv).float().to(device)
     model2.eval()
     with torch.no_grad():
-        s_estimate,_,_,_ = model2(s_deconv,s_deconv[:,0,:,:]) # for DAE only
+        s_estimate,_,_,_ = model2(s_deconv,s_deconv[:,0,:,:].unsqueeze(1)) # for DAE only
     s_estimate = s_estimate.squeeze().cpu().detach().numpy()
     s_sum_est = np.sum(s_estimate,axis=0)  # (W,)
     s_sum_est = s_sum_est + 0j*s_sum_est    # 目前只接受实部调制数据
