@@ -68,12 +68,14 @@ def train(trainloader, model, criterion, optimizer, lrsch, logger, args, epoch):
     logger.update_step()
     for gt, noised, gt_sum in tqdm(trainloader,ascii=True,ncols=60):
         optimizer.zero_grad()
-        outs,dec = model(noised.cuda(),gt.cuda())   # dae only
+        outs,dec,feax,feay = model(noised.cuda(),gt.cuda())   # dae only
         # print("opt tensor:",out)
         gt = gt.cuda()
         gt_sum = gt_sum.cuda()
         # loss_batch = 100*criterion(outs,gt) + criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)
-        loss_batch = 100*criterion(outs,gt)+100*criterion(dec,gt)+criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)    # dae only
+        loss_batch = 100*criterion(dec,gt)+\
+            100*criterion(feax,feay)+\
+            criterion(torch.sum(dec.squeeze(1),dim=1),gt_sum)    # dae only
         loss_batch.backward()
         loss_logger += loss_batch.item()    
         optimizer.step()
@@ -99,7 +101,7 @@ def validate(valloader, model, criterion, optimizer, lrsch, logger, args):
 
     for gt, noised, gt_sum in tqdm(valloader,ascii=True,ncols=60):
         with torch.no_grad():
-            outs,_ = model(noised.cuda(),gt.cuda())   # dae only
+            outs,dec,feax,feay = model(noised.cuda(),gt.cuda())   # dae only
         gt = gt.cuda()
         gt_sum = gt_sum.cuda()
         # print("label:",label)

@@ -24,7 +24,7 @@ class DAE(nn.Module):
         feature_y,size_y = self.gen_y(y)
         out_x = self.dec(feature_x,size_x) # we donnot use GAN training method, instead, we align output y and y clean to x
         out_y = self.dec(feature_y,size_y)
-        return out_y,out_x
+        return out_y,out_x,feature_x,feature_y
 
 class Encoder(nn.Module):
     def __init__(self,in_channels):
