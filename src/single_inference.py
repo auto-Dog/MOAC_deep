@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from numpy import fft
 import numpy as np
 from restore_module import pre_deconv,wiener_deconv,TinyUNet
-from networks.dae import DAE    # optional for experiments
+from networks.fcn import FCN    # optional for experiments
 # PIL read image
 # y_img = y_img/255.
 # y_samples = y_img[:,:,0] +1j*y_img[:,:,1] 
@@ -25,7 +25,7 @@ def inference(y_samples,pth_tar_location,M_users, L_symbols, h_coff, SNR_db):
     '''
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # model2 = TinyUNet(4,1,bilinear=True).to(device)
-    model2 = DAE(4,1).to(device)
+    model2 = FCN(4,1).to(device)
     model2.load_state_dict(torch.load(pth_tar_location, map_location='cpu'))
     # y_samples = (y_samples-np.min(y_samples))/(np.max(y_samples)-np.min(y_samples)) # 归一化
     _,s_deconv = pre_deconv(y_samples, M_users, L_symbols, h_coff, SNR_db=SNR_db)
@@ -39,7 +39,8 @@ def inference(y_samples,pth_tar_location,M_users, L_symbols, h_coff, SNR_db):
     s_deconv = torch.from_numpy(s_deconv).float().to(device)
     model2.eval()
     with torch.no_grad():
-        s_estimate,_,_,_ = model2(s_deconv,s_deconv[:,0,:,:].unsqueeze(1)) # for DAE only
+        s_estimate = model2(s_deconv) 
+        # s_estimate,_,_,_ = model2(s_deconv,s_deconv[:,0,:,:].unsqueeze(1)) # for DAE only
     s_estimate = s_estimate.squeeze().cpu().detach().numpy()
     s_sum_est = np.sum(s_estimate,axis=0)  # (W,)
     s_sum_est = s_sum_est + 0j*s_sum_est    # 目前只接受实部调制数据
