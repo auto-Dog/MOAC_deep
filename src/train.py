@@ -79,10 +79,10 @@ def train(trainloader, model, criterion, optimizer, lrsch, logger, args, epoch):
         loss_batch.backward()
         loss_logger += loss_batch.item()    
         optimizer.step()
-        lrsch.step()
         sum_mse = criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum)
         # print(sum_mse)  # debug
         mse_list.append(sum_mse.cpu().detach())
+    lrsch.step()
     # wiener_mse = criterion(torch.sum(noised.cuda()[:,2,:,:].squeeze(),dim=1),gt_sum).cpu().detach()   # 取前两个样本
     # net_mse = criterion(torch.sum(outs.squeeze(1),dim=1),gt_sum).cpu().detach()
     # print('Compare with Wiener MSE:',wiener_mse)    # compare with winener mse
